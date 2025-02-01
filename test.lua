@@ -1,10 +1,15 @@
 local s, e = pcall(function()
 task.spawn(function()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/RelkzzRebranded/Bypassed---OBFUSCATED..../main/Adonis%20BYPASS.lua"))() -- credits to the anticheat bypasser owner (wasnt made by me)
+loadstring(game:HttpGet("https://raw.githubusercontent.com/RelkzzRebranded/Bypassed---OBFUSCATED..../main/Adonis%20BYPASS.lua"))()
 end)
 end)
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-local FuturisticTheme = {
+local Window = Rayfield:CreateWindow({
+   Name = "EpicHub",
+   Icon = 4483345998,
+   LoadingTitle = "Loading EpicHub...",
+   LoadingSubtitle = "Please wait while the script initializes.",
+   Theme =  {
     TextColor = Color3.fromRGB(240, 240, 240),
     
     Background = Color3.fromRGB(10, 10, 15),
@@ -44,16 +49,10 @@ local FuturisticTheme = {
     InputBackground = Color3.fromRGB(20, 20, 30),
     InputStroke = Color3.fromRGB(0, 200, 180),
     PlaceholderColor = Color3.fromRGB(100, 100, 120)
-}
-local Window = Rayfield:CreateWindow({
-   Name = "EpicHub",
-   Icon = 4483345998, -- Replace with desired icon or leave as 0 for no icon.
-   LoadingTitle = "Loading EpicHub...",
-   LoadingSubtitle = "Please wait while the script initializes.",
-   Theme = "FuturisticTheme", 
+}, 
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "EpicHub", -- Custom folder for your hub/game.
+      FolderName = "EpicHub",
       FileName = "Settings"
    },
    Discord = {
@@ -63,8 +62,6 @@ local Window = Rayfield:CreateWindow({
    },
    KeySystem = false
 })
-
--- Notification function
 function notify(message, title, time)
    Rayfield:Notify({
       Title = tostring(title),
@@ -73,7 +70,6 @@ function notify(message, title, time)
       Image = 4483345998
    })
 end
-
 local CTab = Window:CreateTab("Inventory", 4483345998)
 local SellTab = Window:CreateTab("Sell", 4483345998)
 local TeleTab = Window:CreateTab("Teleport", 4483345998)
@@ -137,26 +133,18 @@ ExTab:CreateButton({
 
         local humanoidRootPart = getCharacterRoot()
         local inventory = player.Backpack:GetChildren()
-
-        -- Loop through all tools in the workspace and grab them if not already in the player's inventory
         for _, item in pairs(workspace:GetChildren()) do
             if item:IsA("Tool") and item:FindFirstChild("Handle") and item.Parent == workspace then
                 local alreadyHasItem = false
-
-                -- Check if the player already has the item in their inventory
                 for _, invItem in pairs(inventory) do
                     if invItem.Name == item.Name then
                         alreadyHasItem = true
                         break
                     end
                 end
-
-                -- If the player does not already have the item, teleport and add it to the backpack
                 if not alreadyHasItem then
                     pcall(function()
-                        -- Teleport the item above the player's head
                         item.Handle.CFrame = humanoidRootPart.CFrame + Vector3.new(0, 2, 0)
-                        -- Add the item to the player's backpack
                         item.Parent = player.Backpack
                     end)
                 end
@@ -232,7 +220,7 @@ ManTab:CreateToggle({
                                 }
 
                                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RegisterHit"):FireServer(unpack(args))
-                                wait(0.1) -- Adjusted wait time
+                                wait(0.1)
                             end
                         end
                     end)
@@ -241,12 +229,12 @@ ManTab:CreateToggle({
                         warn("Error in kill all mobs loop: " .. errorMessage)
                     end
 
-                    wait(0.2) -- Prevent overloading
+                    wait(0.2)
                 end
             end)
             coroutine.resume(autoExecuteCoroutine)
         elseif not isAutoExecuteActive then
-            autoExecuteCoroutine = nil -- Let it exit naturally
+            autoExecuteCoroutine = nil
         end
     end
 })
@@ -313,10 +301,10 @@ ExTab:CreateToggle({
                             }
 
                             game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RegisterHit"):FireServer(unpack(args))
-                            wait(0.1) -- Add a slight delay between executions
+                            wait(0.1)
                         end
                     end
-                    wait(0.175) -- Prevent spamming the loop
+                    wait(0.175)
                 end
             end)
             coroutine.resume(autoExecuteCoroutine)
@@ -345,14 +333,13 @@ ExTab:CreateToggle({
                     if soulOrb.Name == "SoulOrb" then
                         local mainPart = soulOrb:FindFirstChild("Main")
                         if mainPart and mainPart:FindFirstChild("ClickDetector") then
-                            -- Attempt to interact with the ClickDetector from any distance
                             pcall(function()
                                 fireclickdetector(mainPart.ClickDetector)
                             end)
                         end
                     end
                 end
-                task.wait(0.2) -- Adjust delay if needed
+                task.wait(0.2)
             end
         end
 
@@ -415,11 +402,8 @@ ExTab:CreateToggle({
                 local players = game:GetService("Players")
                 local replicatedStorage = game:GetService("ReplicatedStorage")
                 local localPlayer = players.LocalPlayer
-
-                -- Main loop for Auto Kill
                 while isAutoKillActive do
                     for _, player in pairs(players:GetPlayers()) do
-                        -- Skip the local player to avoid self-targeting
                         if player ~= localPlayer then
                             local playerWorkspace = workspace:FindFirstChild(player.Name)
 
@@ -462,17 +446,75 @@ ExTab:CreateToggle({
                                 pcall(function()
                                     replicatedStorage:WaitForChild("Remotes"):WaitForChild("RegisterHit"):FireServer(unpack(args))
                                 end)
-
-                                -- Add a small delay between attacks to avoid spamming
                                 task.wait(0.1)
                             end
                         end
                     end
-
-                    -- Prevent the script from consuming too many resources
                     task.wait(0.2)
                 end
             end)
+        end
+    end
+})
+local AfkModeEnabled = false
+local overlayGui = nil
+
+ExTab:CreateToggle({
+    Name = "🌑 AFK Mode",
+    CurrentValue = false,
+    Flag = "AFKModeToggle",
+    Callback = function(Value)
+        AfkModeEnabled = Value
+        
+        if AfkModeEnabled then
+            -- Create the overlay GUI
+            overlayGui = Instance.new("ScreenGui")
+            overlayGui.Name = "AFKOverlay"
+            overlayGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+            overlayGui.DisplayOrder = 1
+            overlayGui.IgnoreGuiInset = true -- Ensures the overlay covers the entire screen, including notches
+
+            -- Create the black frame
+            local blackFrame = Instance.new("Frame")
+            blackFrame.Size = UDim2.new(1, 0, 1, 0)
+            blackFrame.Position = UDim2.new(0, 0, 0, 0)
+            blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
+            blackFrame.BorderSizePixel = 0
+            blackFrame.Parent = overlayGui
+
+            -- Create a modal text button to block interactions
+            local textButton = Instance.new("TextButton")
+            textButton.Size = UDim2.new(1, 0, 1, 0)
+            textButton.Position = UDim2.new(0, 0, 0, 0)
+            textButton.BackgroundTransparency = 1
+            textButton.Text = ""
+            textButton.Modal = true
+            textButton.Parent = overlayGui
+
+            -- Parent the overlay to CoreGui
+            overlayGui.Parent = game:GetService("CoreGui")
+
+            -- Notify the user
+            Rayfield:Notify({
+                Title = "AFK Mode Activated",
+                Content = "Screen darkened - GUI remains accessible",
+                Duration = 3,
+                Image = 4483362458
+            })
+        else
+            -- Clean up the overlay
+            if overlayGui then
+                overlayGui:Destroy()
+                overlayGui = nil
+
+                -- Notify the user
+                Rayfield:Notify({
+                    Title = "AFK Mode Disabled",
+                    Content = "Screen overlay removed",
+                    Duration = 3,
+                    Image = 4483362458
+                })
+            end
         end
     end
 })
@@ -491,7 +533,7 @@ local fireRadius = 50
 
 ManTab:CreateInput({
     Name = "Set Repeat Count",
-    CurrentValue = "1", -- Default value as a string
+    CurrentValue = "1",
     PlaceholderText = "Enter repeat count",
     RemoveTextAfterFocusLost = true,
     Flag = "RepeatCountInput",
@@ -632,9 +674,9 @@ local monitoredEntities = {
 local notificationSettings = {
     webhookURL = "https://discord.com/api/webhooks/1329424064992907317/9PI2-n6hpRyffjqYXO0Uz2wXO3jwHgIL4GT7OxJOWxyw3KjdXkYVoyBgw6GgiLYjNmQt",
     userID = "479476519308099585",
-    checkInterval = 600, -- Seconds between checks
-    embedColor = 0x00FFE6, -- Cyan color for embeds
-    serverInfo = true -- Include server details in notifications
+    checkInterval = 600,
+    embedColor = 0x00FFE6,
+    serverInfo = true
 }
 
 WHTab:CreateInput({
@@ -738,7 +780,7 @@ end
 for _, entity in pairs(monitoredEntities) do
     if workspace:FindFirstChild(entity) then
         sendNotification(entity)
-        task.wait(3) -- Rate limiting between initial notifications
+        task.wait(3)
     end
 end
 
@@ -747,7 +789,7 @@ task.spawn(function()
         for _, entity in pairs(monitoredEntities) do
             if workspace:FindFirstChild(entity) then
                 sendNotification(entity)
-                task.wait(3) -- Rate limiting between checks
+                task.wait(3)
             end
         end
     end
@@ -772,13 +814,12 @@ local itemsToUse = {
 
 local function useItemSafe(item)
     pcall(function()
-        -- Equip item
         local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
             humanoid:EquipTool(item)
-            task.wait(0.175) -- Allow time for equip animation
+            task.wait(0.175)
             item:Activate()
-            task.wait(0.2) -- Allow time for activation
+            task.wait(0.2)
         end
     end)
 end
@@ -795,23 +836,19 @@ MiscTab:CreateToggle({
                 while autoUseActive do
                     local backpack = game.Players.LocalPlayer:WaitForChild("Backpack")
                     local character = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
-                    
-                    -- Create item cache
                     local validItems = {}
                     for _, item in ipairs(backpack:GetChildren()) do
                         if item:IsA("Tool") and itemsToUse[item.Name] then
                             table.insert(validItems, item)
                         end
                     end
-                    
-                    -- Process items
                     for _, item in ipairs(validItems) do
                         if not autoUseActive then break end
                         useItemSafe(item)
-                        task.wait(0.7) -- Cooldown between item uses
+                        task.wait(0.7)
                     end
                     
-                    task.wait(2) -- Interval between full inventory scans
+                    task.wait(2)
                 end
             end)
         end
@@ -821,11 +858,8 @@ QuestTab:CreateToggle({
     Name = "Auto Gramophone Hit",
     Default = false,
     Callback = function(isEnabled)
-        -- Control variable to manage the loop state
         local autoHitActive = isEnabled
         local autoHitConnection
-
-        -- Function to find the appropriate gramophone
         local function getControlledGramophone()
             local controlledGramophone = workspace:FindFirstChild("ControlledGramophone")
             if controlledGramophone then
@@ -834,14 +868,12 @@ QuestTab:CreateToggle({
                 return workspace:FindFirstChild("TheGramophone")
             end
         end
-
-        -- Function to perform the hit action on the gramophone
         local function performHitAction(gramophone)
-            if not gramophone then return end -- Ensure the gramophone exists
+            if not gramophone then return end
 
             local player = game.Players.LocalPlayer
             local rootPart = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            if not rootPart then return end -- Ensure the player's HumanoidRootPart exists
+            if not rootPart then return end
 
             local args = {
                 [1] = {
@@ -877,12 +909,8 @@ QuestTab:CreateToggle({
                     }
                 }
             }
-
-            -- Fire the remote event to hit the gramophone
             game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("RegisterHit"):FireServer(unpack(args))
         end
-
-        -- Main loop to repeatedly hit the gramophone
         local function startAutoHit()
             autoHitConnection = game:GetService("RunService").Heartbeat:Connect(function()
                 local success, errorMessage = pcall(function()
@@ -897,8 +925,6 @@ QuestTab:CreateToggle({
                 end
             end)
         end
-
-        -- Start or stop the loop based on the toggle
         if autoHitActive then
             startAutoHit()
         else
@@ -912,8 +938,6 @@ QuestTab:CreateToggle({
 local targetItemName = ""
 local isAutoSellActive = false
 local sellLoopThread = nil
-
--- Item Name Input
 SellTab:CreateInput({
     Name = "Item Name",
     CurrentValue = targetItemName,
@@ -979,7 +1003,7 @@ SellTab:CreateToggle({
                         
                         if not success then
                             warn("Sell error:", err)
-                            task.wait(5) -- Cooldown on errors
+                            task.wait(5)
                         end
                     end
                 end
@@ -1142,167 +1166,82 @@ SellTab:CreateToggle({
         end
     end
 })
-local npcCache = {}
-local lastRefresh = 0
-local refreshCooldown = 5 
+local TeleportService = {}
+local selectedNPC = ""
 
-
-local function refreshNpcCache()
-    if os.time() - lastRefresh < refreshCooldown then
-        Rayfield:Notify({
-            Title = "Refresh Cooldown",
-            Content = string.format("Please wait %d more seconds before refreshing again", refreshCooldown - (os.time() - lastRefresh)),
-            Duration = 3,
-            Image = 4483362458
-        })
-        return
-    end
-
-    local newCache = {}
-    for _, group in ipairs(workspace.NPCs:GetChildren()) do
-        local groupName = group.Name
-        local isFolder = group:IsA("Folder")
-        
-        for _, npc in ipairs(group:GetChildren()) do
-            if npc:FindFirstChild("HumanoidRootPart") then
-                table.insert(newCache, {
-                    Name = npc.Name,
-                    DisplayName = npc:GetAttribute("DisplayName") or npc.Name,
-                    Group = isFolder and groupName or "Root",
-                    Object = npc,
-                    LastUpdated = os.time()
-                })
+-- Universal NPC scanner for workspace.NPCs
+function TeleportService.GetNPCList()
+    local npcList = {}
+    local npcContainer = workspace:FindFirstChild("NPCs")
+    
+    if npcContainer then
+        -- Recursive search through all NPC containers
+        for _, item in ipairs(npcContainer:GetDescendants()) do
+            if item:IsA("Model") and item:FindFirstChild("HumanoidRootPart") then
+                table.insert(npcList, item.Name)
             end
         end
     end
     
-    -- Sort alphabetically with group hierarchy
-    table.sort(newCache, function(a, b)
-        return (a.Group .. a.DisplayName) < (b.Group .. b.DisplayName)
-    end)
-    
-    npcCache = newCache
-    lastRefresh = os.time()
-    return newCache
+    table.sort(npcList)
+    return npcList
 end
 
-
-TeleTab:CreateDropdown({
+-- Initialize UI Elements
+local npcDropdown = TeleTab:CreateDropdown({
     Name = "Select NPC",
-    Options = {},
-    Flag = "NPCDropdown",
-    Callback = function(selected) end
-})
-
-
-npcDropdown:Refresh(refreshNpcCache())
-
-
-TeleTab:CreateButton({
-    Name = "🔄 Refresh NPC List",
-    Callback = function()
-        local success, result = pcall(refreshNpcCache)
-        if success then
-            npcDropdown:Refresh(npcCache)
-            Rayfield:Notify({
-                Title = "NPC List Updated",
-                Content = string.format("Found %d active NPCs", #npcCache),
-                Duration = 2,
-                Image = 4483362458
-            })
-        else
-            warn("NPC Refresh Failed:", result)
-            Rayfield:Notify({
-                Title = "Refresh Failed",
-                Content = "Check NPC hierarchy structure",
-                Duration = 5,
-                Image = 4483362458
-            })
-        end
+    Options = TeleportService.GetNPCList(),
+    Default = "Choose NPC",
+    Callback = function(value)
+        selectedNPC = value
+        print("Selected:", value)
     end
 })
 
+TeleTab:CreateButton({
+    Name = "🔄 Refresh List",
+    Callback = function()
+        npcDropdown:Refresh(TeleportService.GetNPCList())
+        selectedNPC = ""
+        print("NPC list refreshed")
+    end
+})
 
 TeleTab:CreateButton({
-    Name = "🚀 Teleport to Selected NPC",
+    Name = "🚀 Teleport to NPC",
     Callback = function()
-        local selected = Rayfield.Flags["NPCDropdown"].CurrentOption
-        if not selected then return end
+        if selectedNPC == "" then return end
         
-        local character = game.Players.LocalPlayer.Character
-        if not character or not character:FindFirstChild("HumanoidRootPart") then
-            Rayfield:Notify({
-                Title = "Teleport Failed",
-                Content = "Character not found!",
-                Duration = 3,
-                Image = 4483362458
-            })
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        
+        if not hrp then
+            warn("No character or HRP found!")
             return
         end
 
-        -- Find NPC in cache
-        local targetNPC
-        for _, entry in ipairs(npcCache) do
-            if entry.Name == selected then
-                targetNPC = entry.Object
-                break
+        -- Deep search for NPC
+        local targetHRP
+        for _, item in ipairs(workspace.NPCs:GetDescendants()) do
+            if item.Name == selectedNPC and item:IsA("Model") then
+                targetHRP = item:FindFirstChild("HumanoidRootPart")
+                if targetHRP then break end
             end
         end
 
-        if targetNPC and targetNPC:FindFirstChild("HumanoidRootPart") then
-            local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if targetHRP then
+            -- Direct teleport matching your working example
+            hrp.CFrame = targetHRP.CFrame
+            print("Teleported to", selectedNPC)
             
-            -- Use TweenService for smoother transition
-            local tweenService = game:GetService("TweenService")
-            local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Quad)
-            
-            local goal = {
-                CFrame = targetNPC.HumanoidRootPart.CFrame * CFrame.new(0, 0, -5)
-            }
-            
-            local tween = tweenService:Create(character.HumanoidRootPart, tweenInfo, goal)
-            
-            local success, err = pcall(function()
-                tween:Play()
-                tween.Completed:Wait()
-                
-                -- Face the NPC after teleport
-                character.HumanoidRootPart.CFrame = CFrame.lookAt(
-                    character.HumanoidRootPart.Position,
-                    targetNPC.HumanoidRootPart.Position
-                )
-            end)
-            
-            if not success then
-                warn("Teleport failed:", err)
-                Rayfield:Notify({
-                    Title = "Teleport Error",
-                    Content = "Failed to move to NPC location",
-                    Duration = 3,
-                    Image = 4483362458
-                })
-            end
+            -- Optional: Add vertical offset if needed
+            -- hrp.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0)
         else
-            Rayfield:Notify({
-                Title = "NPC Not Found",
-                Content = "Selected NPC no longer exists",
-                Duration = 3,
-                Image = 4483362458
-            })
+            warn("NPC not found:", selectedNPC)
         end
     end
 })
-
--- Auto-refresh every 2 minutes
-task.spawn(function()
-    while task.wait(120) do
-        if #npcCache == 0 then  -- Only auto-refresh if cache is empty
-            pcall(function()
-                npcDropdown:Refresh(refreshNpcCache())
-            end)
-        end
-    end
-end)
 MiscTab:CreateToggle({
     Name = "Auto Replenish Sanity",
     Default = false,
@@ -1319,7 +1258,7 @@ MiscTab:CreateToggle({
                         }
                         game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
                     end
-                    task.wait(1) -- Check every second
+                    task.wait(1)
                 end
             end)
             coroutine.resume(autoReplenishCoroutine)
@@ -1419,7 +1358,7 @@ ShopTab:CreateInput({
     Default = "Enter item name",
     TextDisappear = true,
     Callback = function(value)
-        selectedItem = value -- Store the item name input
+        selectedItem = value
     end
 })
 
@@ -1485,8 +1424,6 @@ StoreTab:CreateInput({
 
                                 local bank1 = player.PlayerGui:WaitForChild("MenuGUI"):WaitForChild("Bank")
                                 local bank2 = player.PlayerGui:WaitForChild("MenuGUI"):WaitForChild("Bank2")
-                                
-                                -- Check Bank 1 (slots 1-6) and Bank 2 (slots 1-3)
                                 for i = 1, 6 do
                                     local targetObject = bank1:FindFirstChild(tostring(i))
                                     
@@ -1951,7 +1888,7 @@ BossTab:CreateToggle({
             spawnDoroCoroutine = coroutine.create(function()
                 while isAutoSpawnDoroActive do
                     game:GetService("ReplicatedStorage"):WaitForChild("DungeonSpawn"):WaitForChild("DoroSpawn"):FireServer()
-                    wait(1)  -- Adjust the wait time as necessary
+                    wait(1)
                 end
             end)
             coroutine.resume(spawnDoroCoroutine)
@@ -2056,7 +1993,6 @@ MiscTab:CreateToggle({
     Default = false,
     Callback = function(isAutoCollectActive)
         if isAutoCollectActive then
-            -- Connect to the Heartbeat event
             autoCollectLMDConnection = RunService.Heartbeat:Connect(function()
                 local success, errorMessage = pcall(function()
                     local playerCharacter = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
@@ -2064,7 +2000,6 @@ MiscTab:CreateToggle({
 
                     for _, child in pairs(workspace:GetChildren()) do
                         if child.Name == "LMD" then
-                            -- Move the LMD slightly above the player's position
                             child.CFrame = playerRootPart.CFrame + Vector3.new(0, 2, 0)
                         end
                     end
@@ -2075,7 +2010,6 @@ MiscTab:CreateToggle({
                 end
             end)
         else
-            -- Disconnect the Heartbeat connection
             if autoCollectLMDConnection then
                 autoCollectLMDConnection:Disconnect()
                 autoCollectLMDConnection = nil
@@ -2104,16 +2038,11 @@ MiscTab:CreateToggle({
                     local lootbagItem = backpack and backpack:FindFirstChild("Lootbag")
 
                     if lootbagItem then
-                        -- Move Lootbag to character
                         lootbagItem.Parent = player.Character
-
-                        -- Fire the server event to use the Lootbag
                         pcall(function()
                             replicatedStorage:WaitForChild("ItemUses"):WaitForChild("Lootbag"):FireServer()
                         end)
                     end
-
-                    -- Wait for a short duration before checking again
                     task.wait(1)
                 end
             end)
@@ -2178,9 +2107,6 @@ Callback = function(Value)
   humanoid.JumpPower = tonumber(Value)
 end
 })
-
-
--- UI updates based on settings
 local label
 if Settings.DisplayCash then
     label = Instance.new("TextLabel", Instance.new("ScreenGui", game:GetService("CoreGui")))
@@ -2208,8 +2134,6 @@ task.spawn(function()
       end
    end
 end)
-
--- Notification Example
 notify("Script loaded successfully!", "Welcome to EpicHub", 4)
 
 Rayfield:LoadConfiguration()
