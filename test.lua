@@ -70,16 +70,16 @@ function notify(message, title, time)
       Image = 4483345998
    })
 end
-local CTab = Window:CreateTab("Inventory", 4483345998)
+local ManTab = Window:CreateTab("Main", 4483345998)
+local MiscTab = Window:CreateTab("Misc", 4483345998)
 local SellTab = Window:CreateTab("Sell", 4483345998)
 local TeleTab = Window:CreateTab("Teleport", 4483345998)
 local CraftTab = Window:CreateTab("Craft", 4483345998)
 local WHTab = Window:CreateTab("Webhook", 4483345998)
 local BossTab = Window:CreateTab("Boss", 4483345998)
+local CTab = Window:CreateTab("Inventory", 4483345998)
 local QuestTab = Window:CreateTab("Quest", 4483345998)
-local MiscTab = Window:CreateTab("Misc", 4483345998)
 local ShopTab = Window:CreateTab("Shop", 4483345998)
-local ManTab = Window:CreateTab("Main", 4483345998)
 local ExTab = Window:CreateTab("Extra", 4483345998)
 
 
@@ -92,7 +92,7 @@ end
 
 MiscTab:CreateToggle({
     Name = "Auto Collect Items",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoCollectActive = value
 
@@ -153,8 +153,78 @@ ExTab:CreateButton({
     end
 })
 ManTab:CreateToggle({
+    Name = "Auto kill all",
+    CurrentValue = false,
+    Callback = function(value)
+        isKillAllActive = value
+        
+        if isKillAllActive then
+            killAllCoroutine = coroutine.create(function()
+                while isKillAllActive do
+                    sethiddenproperty(game.Players.LocalPlayer, "SimulationRadius", 112412400)
+                    sethiddenproperty(game.Players.LocalPlayer, "MaxSimulationRadius", 112412400)
+                    for _, d in pairs(game.Workspace:GetDescendants()) do
+                        if d.ClassName == 'Humanoid' then
+                            local isPlayerCharacter = false
+                            
+                            for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+                                if player.Character and player.Character == d.Parent then
+                                    isPlayerCharacter = true
+                                    break
+                                end
+                            end
+                            
+                            if not isPlayerCharacter then
+                                d.Health = 0
+                            end
+                        end
+                    end
+                    wait(0.1)
+                end
+            end)
+            coroutine.resume(killAllCoroutine)
+        else
+            isKillAllActive = false
+            if killAllCoroutine then
+                coroutine.close(killAllCoroutine)
+                killAllCoroutine = nil
+            end
+        end
+    end    
+})
+ManTab:CreateButton({
+    Name = "Collect all chests.",
+    Callback = function()
+        local Y_OFFSET = -3
+        local player = game.Players.LocalPlayer
+        local rp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if not rp then return end
+        local originalCFrame = rp.CFrame
+
+        for _, v in pairs(workspace:GetDescendants()) do
+            if v.Name:lower():find("chest_") then
+                local validParent = v.Parent == workspace or v.Parent == workspace:FindFirstChild("chests")
+                
+                if validParent and v:FindFirstChild("ProximityPrompt") then
+                    local targetPosition = v.CFrame * CFrame.new(0, Y_OFFSET, 0)
+                    rp.CFrame = targetPosition
+                    task.wait(0.15)
+                    local success = pcall(function()
+                        fireproximityprompt(v.ProximityPrompt)
+                    end)
+                    if success and Settings.ChestNotifier then
+                        notify("Collected "..v.Name:gsub("Chest_p", "Chest"), "Chest Collected", 3)
+                    end
+                    task.wait(0.175)
+                end
+            end
+        end
+        rp.CFrame = originalCFrame
+    end
+})
+ManTab:CreateToggle({
     Name = "Kill All Mobs",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoExecuteActive = value
 
@@ -254,7 +324,7 @@ ExTab:CreateButton({
 })
 ExTab:CreateToggle({
     Name = "Kill All",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoExecuteActive = value
 
@@ -325,7 +395,7 @@ ExTab:CreateButton({
 })
 ExTab:CreateToggle({
     Name = "Soul Orbs",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isEnabled)
         local function autoFireAllSoulOrbs()
             while isEnabled do
@@ -350,7 +420,7 @@ ExTab:CreateToggle({
 })
 QuestTab:CreateToggle({
     Name = "Auto Quest",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoQuestActive = value
 
@@ -393,7 +463,7 @@ QuestTab:CreateToggle({
 })
 ExTab:CreateToggle({
     Name = "Auto Kill Target",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoKillActive = value
 
@@ -467,22 +537,17 @@ ExTab:CreateToggle({
         AfkModeEnabled = Value
         
         if AfkModeEnabled then
-            -- Create the overlay GUI
             overlayGui = Instance.new("ScreenGui")
             overlayGui.Name = "AFKOverlay"
             overlayGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
             overlayGui.DisplayOrder = 1
-            overlayGui.IgnoreGuiInset = true -- Ensures the overlay covers the entire screen, including notches
-
-            -- Create the black frame
+            overlayGui.IgnoreGuiInset = true
             local blackFrame = Instance.new("Frame")
             blackFrame.Size = UDim2.new(1, 0, 1, 0)
             blackFrame.Position = UDim2.new(0, 0, 0, 0)
             blackFrame.BackgroundColor3 = Color3.new(0, 0, 0)
             blackFrame.BorderSizePixel = 0
             blackFrame.Parent = overlayGui
-
-            -- Create a modal text button to block interactions
             local textButton = Instance.new("TextButton")
             textButton.Size = UDim2.new(1, 0, 1, 0)
             textButton.Position = UDim2.new(0, 0, 0, 0)
@@ -490,11 +555,7 @@ ExTab:CreateToggle({
             textButton.Text = ""
             textButton.Modal = true
             textButton.Parent = overlayGui
-
-            -- Parent the overlay to CoreGui
             overlayGui.Parent = game:GetService("CoreGui")
-
-            -- Notify the user
             Rayfield:Notify({
                 Title = "AFK Mode Activated",
                 Content = "Screen darkened - GUI remains accessible",
@@ -502,12 +563,9 @@ ExTab:CreateToggle({
                 Image = 4483362458
             })
         else
-            -- Clean up the overlay
             if overlayGui then
                 overlayGui:Destroy()
                 overlayGui = nil
-
-                -- Notify the user
                 Rayfield:Notify({
                     Title = "AFK Mode Disabled",
                     Content = "Screen overlay removed",
@@ -608,7 +666,88 @@ ManTab:CreateButton({
         end
     end
 })
-
+CTab:CreateButton({
+    Name = "Use all items in inventory.",
+    Callback = function()
+        local p = game:GetService("Players")
+        local character = p.LocalPlayer.Character
+        for _, v in ipairs(p.LocalPlayer.Backpack:GetChildren()) do
+            if v:IsA("Tool") then
+                v.Parent = character
+                v:Activate()
+                wait(0.5)
+                v.Parent = p.LocalPlayer.Backpack
+            end
+        end
+    end
+})
+CTab:CreateButton({
+    Name = "📦 List Inventory Items",
+    Callback = function()
+        print("[DEBUG] Initializing inventory scan...")
+        local startTime = os.clock()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local inventoryContainers = {"Backpack", "Character", "StarterGear"}
+        if not LocalPlayer.Character then
+            print("[DEBUG] Waiting for character...")
+            LocalPlayer.CharacterAdded:Wait()
+        end
+        local itemCounts = {}
+        local totalItems = 0
+        
+        for _, containerName in ipairs(inventoryContainers) do
+            local container = LocalPlayer:FindFirstChild(containerName)
+            if container then
+                print("[DEBUG] Scanning container:", container:GetFullName())
+                local function scanRecursive(parent)
+                    for _, item in ipairs(parent:GetChildren()) do
+                        if item:IsA("Tool") then
+                            itemCounts[item.Name] = (itemCounts[item.Name] or 0) + 1
+                            totalItems += 1
+                            print("[DEBUG] Found tool:", item.Name)
+                        end
+                        scanRecursive(item)
+                    end
+                end
+                
+                scanRecursive(container)
+            end
+        end
+        local notificationContent
+        if totalItems > 0 then
+            local formattedItems = {}
+            for itemName, count in pairs(itemCounts) do
+                table.insert(formattedItems, string.format("%s ×%d", itemName, count))
+            end
+            table.sort(formattedItems)
+            notificationContent = table.concat(formattedItems, "\n")
+        else
+            notificationContent = "Inventory is empty in all containers!"
+        end
+        task.wait(0.2)
+        Rayfield:Notify({
+            Title = string.format("🎒 Inventory (%d Items)", totalItems),
+            Content = notificationContent,
+            Duration = 8,
+            Image = 4483345998,
+            Actions = {{
+                Name = "Close",
+                Callback = function()
+                    print("[DEBUG] Inventory notification closed")
+                end
+            }}
+        })
+        print(string.format("[DEBUG] Scan completed in %.2f seconds", os.clock() - startTime))
+    end
+})
+ManTab:CreateButton({
+    Name = "Teleport to InvTarget",
+    Callback = function()
+        local target = workspace:WaitForChild("NPCs"):WaitForChild("InvTarget")
+        rp.CFrame = target.CFrame
+    end
+})
 ManTab:CreateButton({
     Name = "Reset Multiplier",
     Callback = function()
@@ -623,7 +762,7 @@ ManTab:CreateButton({
 })
 QuestTab:CreateToggle({
     Name = "Auto Boss Quest",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isEnabled)
         isBossQuestActive = isEnabled
 
@@ -856,7 +995,7 @@ MiscTab:CreateToggle({
 })
 QuestTab:CreateToggle({
     Name = "Auto Gramophone Hit",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isEnabled)
         local autoHitActive = isEnabled
         local autoHitConnection
@@ -1013,7 +1152,7 @@ SellTab:CreateToggle({
 })
 SellTab:CreateToggle({
     Name = "Auto Sell: Useless Items",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         autoSellActive_AllItems = value
 
@@ -1067,7 +1206,7 @@ SellTab:CreateToggle({
 })
 SellTab:CreateToggle({
     Name = "Auto Sell: All Items",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         autoSellActive_AllItems = value
 
@@ -1130,7 +1269,7 @@ SellTab:CreateToggle({
 })
 SellTab:CreateToggle({
     Name = "Auto Sell: Recruitment Permit",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         autoSellActive_RecruitmentPermit = value
 
@@ -1166,85 +1305,136 @@ SellTab:CreateToggle({
         end
     end
 })
-local TeleportService = {}
-local selectedNPC = ""
-
--- Universal NPC scanner for workspace.NPCs
-function TeleportService.GetNPCList()
-    local npcList = {}
-    local npcContainer = workspace:FindFirstChild("NPCs")
-    
-    if npcContainer then
-        -- Recursive search through all NPC containers
-        for _, item in ipairs(npcContainer:GetDescendants()) do
-            if item:IsA("Model") and item:FindFirstChild("HumanoidRootPart") then
-                table.insert(npcList, item.Name)
+local selectedNPC = nil
+local npcDropdown = nil
+local NPCManager = {
+    Cache = {},
+    Refresh = function()
+        table.clear(NPCManager.Cache)
+        local container = workspace:FindFirstChild("NPCs")
+        
+        if container then
+            for _, item in ipairs(container:GetDescendants()) do
+                if item:IsA("Model") and item:FindFirstChild("HumanoidRootPart") then
+                    NPCManager.Cache[item.Name] = item
+                end
             end
         end
+        
+        return NPCManager.Cache
     end
-    
-    table.sort(npcList)
-    return npcList
-end
-
--- Initialize UI Elements
-local npcDropdown = TeleTab:CreateDropdown({
-    Name = "Select NPC",
-    Options = TeleportService.GetNPCList(),
-    Default = "Choose NPC",
-    Callback = function(value)
-        selectedNPC = value
-        print("Selected:", value)
+}
+npcDropdown = TeleTab:CreateDropdown({
+    Name = "🎯 Select NPC",
+    Options = {},
+    CurrentOption = "",
+    Callback = function(Value)
+        selectedNPC = Value
+        Rayfield:Notify({
+            Title = "Selection Updated",
+            Content = "Target: "..Value,
+            Duration = 1.5,
+            Image = 4483362458
+        })
     end
 })
 
+local function UpdateDropdown()
+    NPCManager.Refresh()
+    local names = {}
+    for name in pairs(NPCManager.Cache) do
+        table.insert(names, name)
+    end
+    table.sort(names)
+    npcDropdown:SetOptions(names)
+end
 TeleTab:CreateButton({
     Name = "🔄 Refresh List",
     Callback = function()
-        npcDropdown:Refresh(TeleportService.GetNPCList())
-        selectedNPC = ""
-        print("NPC list refreshed")
+        UpdateDropdown()
+        Rayfield:Notify({
+            Title = "System Update",
+            Content = "NPC List Refreshed",
+            Duration = 1.5,
+            Image = 4483362458
+        })
     end
 })
 
 TeleTab:CreateButton({
-    Name = "🚀 Teleport to NPC",
+    Name = "🚀 Execute Teleport",
     Callback = function()
-        if selectedNPC == "" then return end
-        
-        local player = game:GetService("Players").LocalPlayer
-        local character = player.Character
-        local hrp = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if not hrp then
-            warn("No character or HRP found!")
+        if not selectedNPC then
+            Rayfield:Notify({
+                Title = "Operation Failed",
+                Content = "No NPC selected!",
+                Duration = 2,
+                Image = 4483362458
+            })
             return
         end
 
-        -- Deep search for NPC
-        local targetHRP
-        for _, item in ipairs(workspace.NPCs:GetDescendants()) do
-            if item.Name == selectedNPC and item:IsA("Model") then
-                targetHRP = item:FindFirstChild("HumanoidRootPart")
-                if targetHRP then break end
-            end
+        local player = game.Players.LocalPlayer
+        local character = player.Character
+        if not character then return end
+
+        local hrp = character:FindFirstChild("HumanoidRootPart")
+        if not hrp then
+            Rayfield:Notify({
+                Title = "Character Error",
+                Content = "Missing HRP!",
+                Duration = 2,
+                Image = 4483362458
+            })
+            return
         end
 
-        if targetHRP then
-            -- Direct teleport matching your working example
-            hrp.CFrame = targetHRP.CFrame
-            print("Teleported to", selectedNPC)
-            
-            -- Optional: Add vertical offset if needed
-            -- hrp.CFrame = targetHRP.CFrame + Vector3.new(0, 3, 0)
+        local target = NPCManager.Cache[selectedNPC]
+        if not target then
+            Rayfield:Notify({
+                Title = "Target Error",
+                Content = "NPC not found!",
+                Duration = 2,
+                Image = 4483362458
+            })
+            return
+        end
+
+        local targetHrp = target:FindFirstChild("HumanoidRootPart")
+        if not targetHrp then
+            Rayfield:Notify({
+                Title = "Target Error",
+                Content = "NPC missing HRP!",
+                Duration = 2,
+                Image = 4483362458
+            })
+            return
+        end
+        local success, err = pcall(function()
+            hrp.CFrame = targetHrp.CFrame * CFrame.new(0, 3, 0)
+        end)
+
+        if success then
+            Rayfield:Notify({
+                Title = "Teleport Success",
+                Content = "Arrived at "..selectedNPC,
+                Duration = 2,
+                Image = 4483362458
+            })
         else
-            warn("NPC not found:", selectedNPC)
+            Rayfield:Notify({
+                Title = "Teleport Failed",
+                Content = "Error: "..tostring(err),
+                Duration = 3,
+                Image = 4483362458
+            })
         end
     end
 })
+UpdateDropdown()
 MiscTab:CreateToggle({
     Name = "Auto Replenish Sanity",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isEnabled)
         autoReplenishCoroutine = nil
         if isEnabled then
@@ -1272,7 +1462,7 @@ MiscTab:CreateToggle({
 })
 CraftTab:CreateDropdown({
     Name = "Select items",
-    Default = "",
+    CurrentValue = "",
     Options = (function()
         local guiOptions = {}
         for _, gui in pairs(game:GetService("Players").LocalPlayer.PlayerGui:GetChildren()) do
@@ -1288,7 +1478,7 @@ CraftTab:CreateDropdown({
 })
 ShopTab:CreateDropdown({
     Name = "Select Item to Purchase",
-    Default = "",
+    CurrentOption = "",
     Options = (function()
         local purchasableItems = {}
         for _, item in pairs(game:GetService("Players").LocalPlayer.PlayerGui.ShopGUI.Purchase:GetChildren()) do
@@ -1304,8 +1494,9 @@ ShopTab:CreateDropdown({
 })
 ShopTab:CreateInput({
     Name = "Enter Amount",
-    Default = "1",
-    TextDisappear = false,
+    CurrentValue = "1",
+    PlaceholderText = "Enter amount",
+    RemoveTextAfterFocusLost = false,
     Callback = function(value)
         purchaseAmount = value
     end
@@ -1321,13 +1512,17 @@ ShopTab:CreateButton({
             }
             game:GetService("ReplicatedStorage"):WaitForChild("Purchase"):FireServer(unpack(args))
         else
-            print("Please select an item and specify the amount before purchasing.")
+            Rayfield:Notify({
+                Title = "Purchase Failed",
+                Content = "Please select an item and specify the amount",
+                Duration = 3
+            })
         end
     end
 })
 ShopTab:CreateToggle({
     Name = "Enable Auto Purchase",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isEnabled)
         if isEnabled then
             autoPurchaseCoroutine = coroutine.create(function()
@@ -1355,8 +1550,8 @@ ShopTab:CreateToggle({
 })
 ShopTab:CreateInput({
     Name = "Item Name",
-    Default = "Enter item name",
-    TextDisappear = true,
+    CurrentValue = "Enter item name",
+    RemoveTextAfterFocusLost = true,
     Callback = function(value)
         selectedItem = value
     end
@@ -1397,12 +1592,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 StoreTab:CreateInput({
     Name = "Item Name",
-    Default = "Enter item name",
-    TextDisappear = true,
+    CurrentValue = "Enter item name",
+    RemoveTextAfterFocusLost = true,
     Callback = function(itemName)
         StoreTab:CreateToggle({
             Name = "Store " .. itemName,
-            Default = false,
+            CurrentValue = false,
             Callback = function(value)
                 if value then
                     spawnStoreCoroutine = coroutine.create(function()
@@ -1470,7 +1665,7 @@ StoreTab:CreateInput({
 })
 StoreTab:CreateToggle({
     Name = "Auto Store: Geminus Anguium",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         local storeGeminusAnguiumCoroutine = nil
 
@@ -1536,7 +1731,7 @@ StoreTab:CreateToggle({
 })
 StoreTab:CreateToggle({
     Name = "Auto Store: Hihiirokane",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         local storeGeminusAnguiumCoroutine = nil
 
@@ -1602,7 +1797,7 @@ StoreTab:CreateToggle({
 })
 StoreTab:CreateToggle({
     Name = "Auto Store: Invitation from Black Silence",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         local storeGeminusAnguiumCoroutine = nil
 
@@ -1668,7 +1863,7 @@ StoreTab:CreateToggle({
 })
 StoreTab:CreateToggle({
     Name = "Auto Store: Texas' Tail",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         local storeGeminusAnguiumCoroutine = nil
 
@@ -1734,7 +1929,7 @@ StoreTab:CreateToggle({
 })
 StoreTab:CreateToggle({
     Name = "Auto Store: Cat",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         local storeGeminusAnguiumCoroutine = nil
 
@@ -1804,7 +1999,7 @@ local CheckEvents = ReplicatedStorage:WaitForChild("CheckEvents")
 
 MiscTab:CreateToggle({
     Name = "Invitation",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isActive)
         ac = isActive
 
@@ -1842,7 +2037,7 @@ MiscTab:CreateToggle({
 })
 BossTab:CreateToggle({
     Name = "Auto Reset/Delete Stand",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoResetActive = value
 
@@ -1880,7 +2075,7 @@ BossTab:CreateToggle({
 })
 BossTab:CreateToggle({
     Name = "Auto Spawn Doro",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoSpawnDoroActive = value
         
@@ -1903,7 +2098,7 @@ BossTab:CreateToggle({
 })
 BossTab:CreateToggle({
     Name = "Auto Gacha",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         isAutoGachaActive = value
 
@@ -1926,7 +2121,7 @@ BossTab:CreateToggle({
 })
 BossTab:CreateToggle({
     Name = "Auto Boss",
-    Default = false,
+    CurrentValue = false,
     Callback = function(value)
         local autoBossCoroutines = {}
         local isAutoBossActive = value
@@ -1990,7 +2185,7 @@ local RunService = game:GetService("RunService")
 
 MiscTab:CreateToggle({
     Name = "Auto Collect LMD",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isAutoCollectActive)
         if isAutoCollectActive then
             autoCollectLMDConnection = RunService.Heartbeat:Connect(function()
@@ -2024,7 +2219,7 @@ game.Players.LocalPlayer.CharacterAdded:Connect(function()
 end)
 MiscTab:CreateToggle({
     Name = "Auto Lootbag",
-    Default = false,
+    CurrentValue = false,
     Callback = function(isEnabled)
         isAutoLootbagActive = isEnabled
 
@@ -2053,56 +2248,19 @@ local isKillAllActive = false
 local killAllCoroutine
 
 local items = {}
-
-CTab:CreateButton({
-Name = "List Inventory Items",
-Callback = function()
-    for i, v in p.LocalPlayer.Backpack:GetChildren() do
-    if type(items[v.Name]) == 'number' then
-    items[v.Name] += 1
-    else
-    items[v.Name] = 1
-    end
-  end
-      for i, v in items do
-      Rayfield:Notify({
-        Name = i,
-        Content = "x"..tostring(v),
-        Image = "rbxassetid://4483345998",
-        Time = 1.5
-      })
-      task.wait(.5)
-      end
-      items = {}
-  end
-})
-CTab:CreateButton({
-Name = "Use all items in inventory.",
-Callback = function()
-      for i, v in p.LocalPlayer.Backpack:GetChildren() do
-        v.Parent = c; v:Activate() v.Parent = p.LocalPlayer.Backpack
-      end
-    end})
-ManTab:CreateButton({
-    Name = "Teleport to InvTarget",
-    Callback = function()
-        local target = workspace:WaitForChild("NPCs"):WaitForChild("InvTarget")
-        rp.CFrame = target.CFrame
-    end
-})
 local autodels = {}
 ManTab:CreateInput({
 Name = "Player Speed",
-Default = humanoid.WalkSpeed,
-TextDisappear = true,
+CurrentValue = humanoid.WalkSpeed,
+RemoveTextAfterFocusLost = true,
 Callback = function(Value)
   humanoid.WalkSpeed = tonumber(Value)
 end	  
 })
 ManTab:CreateInput({
 Name = "Player JumpPower",
-Default = humanoid.JumpPower,
-TextDisappear = true,
+CurrentValue = humanoid.JumpPower,
+RemoveTextAfterFocusLost = true,
 Callback = function(Value)
   humanoid.JumpPower = tonumber(Value)
 end
